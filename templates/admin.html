@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuários — Kilo Admin</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem("kilo-theme");
+      if (t !== "light" && t !== "dark") {
+        t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <a href="{{ url_for('views.index') }}" class="wordmark">Kilo</a>
+      <span class="admin-tag">Administração</span>
+    </div>
+    <div class="admin-header-right">
+      <a href="{{ url_for('views.index') }}" class="btn">Minhas notas</a>
+      <button id="theme-toggle" type="button" class="btn btn-ghost btn-icon" title="Alternar tema" aria-label="Alternar tema"></button>
+      <form method="post" action="{{ url_for('views.logout') }}">
+        <button type="submit" class="btn btn-ghost">Sair</button>
+      </form>
+    </div>
+  </header>
+
+  <section id="admin-users-view" class="admin-container">
+    <div class="admin-toolbar-row">
+      <h1 class="admin-heading">Usuários cadastrados</h1>
+      <div class="admin-search-box">
+        <input
+          id="admin-search-input"
+          type="search"
+          class="input input-sm"
+          placeholder="Filtrar por nome ou e-mail…"
+          aria-label="Filtrar usuários"
+        >
+      </div>
+    </div>
+
+    <div id="admin-users-grid" class="user-blocks-grid">
+      <div class="notes-empty">Carregando usuários…</div>
+    </div>
+  </section>
+
+  <section id="admin-user-view" class="admin-inspector hidden">
+    <aside class="admin-inspector-sidebar">
+      <div class="admin-inspector-user">
+        <button id="btn-back-users" type="button" class="btn">← Todos os usuários</button>
+        <div>
+          <div id="admin-breadcrumb-user" class="user-block-name"></div>
+          <div id="admin-breadcrumb-email" class="admin-inspector-meta"></div>
+        </div>
+      </div>
+
+      <div id="admin-notes-list" class="notes-list"></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="workspace-topbar">
+        <span id="admin-note-status" class="status-indicator">
+          <span class="status-dot"></span>
+          <span>Somente leitura</span>
+        </span>
+        <div class="topbar-actions">
+          <button id="btn-admin-export-png" type="button" class="btn" disabled>Exportar PNG</button>
+        </div>
+      </header>
+
+      <div class="editor-scroll">
+        <div id="admin-note-empty" class="editor-empty">
+          <h2>Selecione uma nota</h2>
+          <p>Escolha uma nota na coluna à esquerda para inspecionar o conteúdo completo.</p>
+        </div>
+
+        <article id="admin-note-view" class="editor-canvas hidden">
+          <h2 id="admin-note-title" class="readonly-note-title"></h2>
+          <div id="admin-note-date" class="readonly-note-date"></div>
+          <div id="admin-note-body" class="readonly-note-body"></div>
+        </article>
+      </div>
+
+      <footer class="workspace-footer">
+        <span>Visualização administrativa (descomprimido)</span>
+        <span id="admin-savings-stat" class="savings-stat">—</span>
+      </footer>
+    </main>
+  </section>
+
+  <div id="image-lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
+    <img id="lightbox-img" src="" alt="Visualização em tamanho original">
+    <div class="lightbox-bar">
+      <span id="lightbox-meta"></span>
+      <button id="lightbox-close" type="button" class="btn">Fechar</button>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

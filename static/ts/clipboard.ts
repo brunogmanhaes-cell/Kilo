@@ -105,7 +105,7 @@ export function attachPasteHandler(options: PasteHandlerOptions): void {
       const placeholder = document.createElement("span");
       placeholder.className = "paste-placeholder";
       placeholder.setAttribute("contenteditable", "false");
-      placeholder.textContent = "Comprimindo e enviando imagem…";
+      placeholder.textContent = "Enviando imagem em qualidade original…";
 
       const range = getEditorRange(editor);
       insertNodeAtRange(editor, range, placeholder);
@@ -139,4 +139,44 @@ export function attachPasteHandler(options: PasteHandlerOptions): void {
       }
     }
   }
+}
+
+export function attachImageLightbox(container: HTMLElement): void {
+  const lightbox = document.getElementById("image-lightbox");
+  const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement | null;
+  const lightboxMeta = document.getElementById("lightbox-meta");
+  const lightboxClose = document.getElementById("lightbox-close");
+
+  if (!lightbox || !lightboxImg || !lightboxMeta || !lightboxClose) {
+    return;
+  }
+
+  const close = (): void => {
+    lightbox.classList.add("hidden");
+    lightboxImg.src = "";
+  };
+
+  container.addEventListener("click", (event: MouseEvent) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) {
+      return;
+    }
+    lightboxImg.src = target.src;
+    const w = target.naturalWidth || target.width;
+    const h = target.naturalHeight || target.height;
+    lightboxMeta.textContent = w && h ? `${w} × ${h} px (original)` : "Qualidade original";
+    lightbox.classList.remove("hidden");
+  });
+
+  lightboxClose.addEventListener("click", close);
+  lightbox.addEventListener("click", (event: MouseEvent) => {
+    if (event.target === lightbox) {
+      close();
+    }
+  });
+  document.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Escape" && !lightbox.classList.contains("hidden")) {
+      close();
+    }
+  });
 }

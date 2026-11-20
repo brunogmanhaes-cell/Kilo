@@ -1,6 +1,6 @@
-# Arquitetura do Sistema — Kilo Notes (High-Efficiency Oracle Notepad)
+# Arquitetura do Sistema — Kilo Notes (V2)
 
-Aplicação web pessoal de Bloco de Notas focada em **compressão extrema de armazenamento** em banco **Oracle Database**, utilizando **Python (Flask + `oracledb` Thin Mode + `Pillow` + `zlib`)** no backend e **HTML5 + CSS3 + TypeScript (Vanilla JS)** no frontend, preparada para deploy contínuo no **Render** via **GitHub**.
+Aplicação web minimalista de Bloco de Notas com **armazenamento comprimido em banco Oracle Database** e **entrega 100% lossless na leitura**, utilizando **Python (Flask + `oracledb` Thin Mode + `Pillow` + `zlib`)** no backend e **HTML5 + CSS3 + TypeScript (Vanilla JS)** no frontend, preparada para deploy contínuo no **Render** via **GitHub**.
 
 ---
 
@@ -14,26 +14,34 @@ kilo-notes/
 │   ├── __init__.py          # Application Factory (Flask, Flask-Login, Pool Lifecycle)
 │   ├── config.py            # Carregamento e validação de variáveis de ambiente
 │   ├── db.py                # Pool de conexões oracledb (Thin Mode) e helpers de transação
-│   ├── auth.py              # Flask-Login (usuário único via ADMIN_USER / ADMIN_PASSWORD_HASH)
-│   ├── compression.py       # Pipelines de compressão: texto (zlib) e imagem (Pillow -> WebP)
+│   ├── auth.py              # Multi-usuário (NOTE_USERS) + sync do admin via .env
+│   ├── compression.py       # Pipelines zlib, imagem 100% lossless e sanitização HTML
 │   └── routes/
 │       ├── __init__.py
-│       ├── views.py         # Rotas HTML (/login, /app)
-│       ├── notes_api.py     # CRUD REST (/api/notes, /api/notes/<id>)
-│       └── images_api.py    # Upload Ctrl+V e entrega binária (/api/upload, /api/images/<id>)
+│       ├── views.py         # Rotas HTML (/, /login, /register, /admin, /health)
+│       ├── notes_api.py     # CRUD REST por usuário (/api/notes, /api/notes/<id>)
+│       ├── images_api.py    # Upload Ctrl+V lossless e entrega binária (/api/upload, /api/images/<id>)
+│       └── admin_api.py     # Inspeção administrativa (/api/admin/users, /api/admin/notes/<id>)
 ├── sql/
-│   └── schema.sql           # DDL Oracle Database (NOTES, NOTE_IMAGES, índices e constraints)
+│   ├── schema.sql           # DDL Oracle Database completo (NOTE_USERS, NOTES, NOTE_IMAGES)
+│   └── migration_v2.sql     # Script incremental V1 -> V2
 ├── static/
 │   ├── css/
-│   │   └── dark.css         # Tema escuro minimalista (Sidebar + Editor + Badge de Economia)
+│   │   └── app.css          # Tema minimalista claro/escuro, toolbar, painel admin e lightbox
 │   ├── ts/
-│   │   ├── api.ts           # Cliente HTTP tipado e contratos JSON
-│   │   ├── clipboard.ts     # Interceptador de Ctrl+V para upload instantâneo de imagens
-│   │   └── app.ts           # Estado da UI, autosave com debounce e métrica de economia
-│   └── js/                  # Saída compilada pelo TypeScript (versionada ou gerada no build)
+│   │   ├── theme.ts         # Alternância e persistência de tema claro/escuro
+│   │   ├── api.ts           # Cliente HTTP tipado (notas, imagens e endpoints admin)
+│   │   ├── clipboard.ts     # Interceptador de Ctrl+V lossless e lightbox de imagens
+│   │   ├── editorToolbar.ts # Toolbar rich-text (tamanho, cor, fundo, B/I/U)
+│   │   ├── exportPng.ts     # Renderização SVG/Canvas -> download PNG com imagens inline
+│   │   ├── app.ts           # Estado do editor, autosave com debounce e rodapé discreto
+│   │   └── admin.ts         # Grid em blocos de usuários e inspetor de notas
+│   └── js/                  # Saída compilada pelo TypeScript (versionada para deploy sem Node)
 ├── templates/
-│   ├── login.html           # Tela de login enxuta
-│   └── index.html           # Interface principal (Sidebar + Editor rich-content + Status bar)
+│   ├── login.html           # Login (usuário ou e-mail + senha)
+│   ├── register.html        # Cadastro (usuário, e-mail e senha)
+│   ├── index.html           # Editor minimalista com toolbar e exportação PNG
+│   └── admin.html           # Painel do administrador (blocos de usuários + leitor)
 ├── .env.example             # Template seguro de variáveis de ambiente
 ├── .gitignore               # Bloqueio rigoroso de segredos, wallets, caches e artefatos locais
 ├── ARCHITECTURE.md          # Este documento de arquitetura

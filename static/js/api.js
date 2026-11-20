@@ -19,7 +19,7 @@ async function requestJson(url, init) {
 export function listNotes() {
     return requestJson("/api/notes");
 }
-export function createNote(title = "Nova Nota", content = "") {
+export function createNote(title = "Sem título", content = "") {
     return requestJson("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,6 +50,15 @@ export function uploadImage(noteId, file) {
         body: formData,
     });
 }
+export function listAdminUsers() {
+    return requestJson("/api/admin/users");
+}
+export function listAdminUserNotes(userId) {
+    return requestJson(`/api/admin/users/${userId}/notes`);
+}
+export function getAdminNote(noteId) {
+    return requestJson(`/api/admin/notes/${noteId}`);
+}
 export function formatBytes(bytes) {
     if (!Number.isFinite(bytes) || bytes <= 0) {
         return "0 B";
@@ -64,11 +73,9 @@ export function formatBytes(bytes) {
     const decimals = unitIndex === 0 ? 0 : value >= 100 ? 0 : 1;
     return `${value.toFixed(decimals)} ${units[unitIndex]}`;
 }
-export function formatSavingsBadge(metrics) {
+export function formatCompactSavings(metrics) {
     if (metrics.raw_bytes <= 0) {
-        return "Original: 0 B → Salvo: 0 B (0%)";
+        return "0 B";
     }
-    const rawLabel = formatBytes(metrics.raw_bytes);
-    const compLabel = formatBytes(metrics.compressed_bytes);
-    return `Original: ${rawLabel} → Salvo: ${compLabel} (-${metrics.saved_percent.toFixed(1)}%)`;
+    return `${formatBytes(metrics.raw_bytes)} → ${formatBytes(metrics.compressed_bytes)} · -${metrics.saved_percent.toFixed(1)}%`;
 }

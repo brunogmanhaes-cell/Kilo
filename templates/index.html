@@ -3,82 +3,201 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kilo Notes</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/dark.css') }}">
+  <title>Kilo</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem("kilo-theme");
+      if (t !== "light" && t !== "dark") {
+        t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="brand">
-          <span class="brand-name">Kilo Notes</span>
-          <span class="brand-tag">WebP + zlib · Oracle</span>
-        </div>
-        <button id="btn-new-note" type="button" class="btn btn-primary">+ Nova</button>
+      <div class="sidebar-top">
+        <span class="wordmark">Kilo</span>
+        <button id="btn-new-note" type="button" class="btn btn-primary" title="Nova nota">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nova
+        </button>
       </div>
 
       <div class="sidebar-search">
         <input
           id="search-input"
           type="search"
-          class="input"
-          placeholder="Filtrar notas..."
-          aria-label="Filtrar notas"
+          class="input input-sm"
+          placeholder="Buscar notas…"
+          aria-label="Buscar notas"
         >
       </div>
 
       <div id="notes-list" class="notes-list" role="list">
-        <div class="notes-empty">Carregando notas…</div>
+        <div class="notes-empty">Carregando…</div>
       </div>
 
-      <div class="sidebar-footer">
-        <span>{{ admin_user }}</span>
-        <form method="post" action="{{ url_for('views.logout') }}">
-          <button type="submit" class="btn btn-ghost">Sair</button>
-        </form>
+      <div class="sidebar-bottom">
+        <span class="user-label" title="{{ email }}">{{ username }}</span>
+        <div class="sidebar-actions">
+          {% if is_admin %}
+            <a href="{{ url_for('views.admin_panel') }}" class="btn btn-ghost" title="Painel de usuários">Usuários</a>
+          {% endif %}
+          <button id="theme-toggle" type="button" class="btn btn-ghost btn-icon" title="Alternar tema" aria-label="Alternar tema"></button>
+          <form method="post" action="{{ url_for('views.logout') }}">
+            <button type="submit" class="btn btn-ghost btn-icon" title="Sair" aria-label="Sair">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          </form>
+        </div>
       </div>
     </aside>
 
     <main class="workspace">
-      <header class="workspace-header">
-        <input
-          id="note-title"
-          type="text"
-          class="note-title-input"
-          placeholder="Título da nota..."
-          maxlength="255"
-          disabled
-        >
-        <div class="workspace-actions">
-          <span id="save-status" class="save-status">Pronto</span>
-          <button id="btn-save-note" type="button" class="btn" disabled>Salvar</button>
-          <button id="btn-delete-note" type="button" class="btn btn-danger" disabled>Excluir</button>
+      <header class="workspace-topbar">
+        <span id="save-status" class="status-indicator">
+          <span class="status-dot"></span>
+          <span id="save-status-text">Pronto</span>
+        </span>
+
+        <div class="topbar-actions">
+          <button id="btn-export-png" type="button" class="btn" disabled title="Exportar nota como PNG">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar PNG
+          </button>
+          <button id="btn-delete-note" type="button" class="btn btn-danger-ghost btn-icon" disabled title="Excluir nota" aria-label="Excluir nota">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
         </div>
       </header>
 
-      <div class="editor-scroll">
-        <div id="editor-empty" class="editor-empty">
-          <h2>Nenhuma nota selecionada</h2>
-          <p>Crie uma nova nota ou selecione uma existente na barra lateral. Cole prints com Ctrl+V para comprimir automaticamente em WebP.</p>
-          <button id="btn-empty-new" type="button" class="btn btn-primary">Criar primeira nota</button>
+      <div id="editor-toolbar" class="editor-toolbar" role="toolbar" aria-label="Formatação de texto">
+        <div class="toolbar-group">
+          <button type="button" class="tb-btn" data-cmd="bold" title="Negrito (Ctrl+B)" disabled>B</button>
+          <button type="button" class="tb-btn" data-cmd="italic" title="Itálico (Ctrl+I)" disabled><em>I</em></button>
+          <button type="button" class="tb-btn" data-cmd="underline" title="Sublinhado (Ctrl+U)" disabled><u>U</u></button>
         </div>
 
-        <div
-          id="note-editor"
-          class="note-editor hidden"
-          contenteditable="true"
-          spellcheck="true"
-          data-placeholder="Comece a digitar ou pressione Ctrl+V para colar um print..."
-        ></div>
+        <span class="toolbar-sep"></span>
+
+        <div class="toolbar-group">
+          <select id="select-font-size" class="tb-select" title="Tamanho da fonte" aria-label="Tamanho da fonte" disabled>
+            <option value="">Tamanho</option>
+            <option value="12px">12 px</option>
+            <option value="14px">14 px</option>
+            <option value="16px">16 px</option>
+            <option value="18px">18 px</option>
+            <option value="22px">22 px</option>
+            <option value="28px">28 px</option>
+          </select>
+        </div>
+
+        <span class="toolbar-sep"></span>
+
+        <div class="toolbar-group">
+          <button id="btn-text-color" type="button" class="tb-btn" title="Cor do texto" disabled>
+            <span>A</span>
+            <span id="text-color-bar" class="color-indicator"></span>
+          </button>
+          <div id="popover-text-color" class="color-popover hidden">
+            <div class="swatch-grid">
+              <button type="button" class="swatch" data-text-color="#18181b" style="background:#18181b" title="Preto"></button>
+              <button type="button" class="swatch" data-text-color="#f4f4f5" style="background:#f4f4f5" title="Branco"></button>
+              <button type="button" class="swatch" data-text-color="#71717a" style="background:#71717a" title="Cinza"></button>
+              <button type="button" class="swatch" data-text-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
+              <button type="button" class="swatch" data-text-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
+              <button type="button" class="swatch" data-text-color="#ca8a04" style="background:#ca8a04" title="Âmbar"></button>
+              <button type="button" class="swatch" data-text-color="#16a34a" style="background:#16a34a" title="Verde"></button>
+              <button type="button" class="swatch" data-text-color="#0d9488" style="background:#0d9488" title="Turquesa"></button>
+              <button type="button" class="swatch" data-text-color="#2563eb" style="background:#2563eb" title="Azul"></button>
+              <button type="button" class="swatch" data-text-color="#7c3aed" style="background:#7c3aed" title="Roxo"></button>
+              <button type="button" class="swatch" data-text-color="#db2777" style="background:#db2777" title="Rosa"></button>
+              <button type="button" class="swatch" data-text-color="#60a5fa" style="background:#60a5fa" title="Azul claro"></button>
+            </div>
+            <div class="popover-row">
+              <label for="input-text-color">Personalizada</label>
+              <input id="input-text-color" type="color" value="#2563eb">
+              <button id="btn-reset-text-color" type="button" class="btn btn-ghost">Padrão</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar-group">
+          <button id="btn-bg-color" type="button" class="tb-btn" title="Cor de fundo do texto" disabled>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+            <span id="bg-color-bar" class="color-indicator" style="background:#fef08a"></span>
+          </button>
+          <div id="popover-bg-color" class="color-popover hidden">
+            <div class="swatch-grid">
+              <button type="button" class="swatch" data-bg-color="#fef08a" style="background:#fef08a" title="Amarelo"></button>
+              <button type="button" class="swatch" data-bg-color="#bbf7d0" style="background:#bbf7d0" title="Verde"></button>
+              <button type="button" class="swatch" data-bg-color="#bfdbfe" style="background:#bfdbfe" title="Azul"></button>
+              <button type="button" class="swatch" data-bg-color="#fbcfe8" style="background:#fbcfe8" title="Rosa"></button>
+              <button type="button" class="swatch" data-bg-color="#e9d5ff" style="background:#e9d5ff" title="Lavanda"></button>
+              <button type="button" class="swatch" data-bg-color="#fed7aa" style="background:#fed7aa" title="Pêssego"></button>
+              <button type="button" class="swatch" data-bg-color="#854d0e" style="background:#854d0e" title="Âmbar escuro"></button>
+              <button type="button" class="swatch" data-bg-color="#14532d" style="background:#14532d" title="Verde escuro"></button>
+              <button type="button" class="swatch" data-bg-color="#1e3a8a" style="background:#1e3a8a" title="Azul escuro"></button>
+              <button type="button" class="swatch" data-bg-color="#7f1d1d" style="background:#7f1d1d" title="Vinho"></button>
+              <button type="button" class="swatch" data-bg-color="#581c87" style="background:#581c87" title="Roxo escuro"></button>
+              <button type="button" class="swatch" data-bg-color="#27272a" style="background:#27272a" title="Grafite"></button>
+            </div>
+            <div class="popover-row">
+              <label for="input-bg-color">Personalizada</label>
+              <input id="input-bg-color" type="color" value="#fef08a">
+              <button id="btn-reset-bg-color" type="button" class="btn btn-ghost">Sem cor</button>
+            </div>
+          </div>
+        </div>
+
+        <span class="toolbar-sep"></span>
+
+        <div class="toolbar-group">
+          <button id="btn-clear-format" type="button" class="tb-btn" title="Limpar formatação" disabled>Limpar</button>
+        </div>
       </div>
 
-      <footer class="status-bar">
-        <span id="status-hint">Ctrl+V envia prints como WebP (máx. 1280px) · Ctrl+S salva</span>
-        <span id="savings-badge" class="savings-badge neutral" title="Economia de armazenamento no Oracle">
-          Sem dados
-        </span>
+      <div class="editor-scroll">
+        <div id="editor-empty" class="editor-empty">
+          <h2>Nenhuma nota aberta</h2>
+          <p>Crie uma nova nota ou selecione um registro na lista. Pressione Ctrl+V para colar imagens sem perda de qualidade.</p>
+          <button id="btn-empty-new" type="button" class="btn btn-primary">Criar nota</button>
+        </div>
+
+        <div id="editor-canvas" class="editor-canvas hidden">
+          <input
+            id="note-title"
+            type="text"
+            class="note-title-input"
+            placeholder="Sem título"
+            maxlength="255"
+          >
+          <div
+            id="note-editor"
+            class="note-editor"
+            contenteditable="true"
+            spellcheck="true"
+            data-placeholder="Escreva aqui ou cole imagens com Ctrl+V…"
+          ></div>
+        </div>
+      </div>
+
+      <footer class="workspace-footer">
+        <span>Ctrl+V cola imagens em qualidade original · Ctrl+S salva</span>
+        <span id="savings-stat" class="savings-stat">—</span>
       </footer>
     </main>
+  </div>
+
+  <div id="image-lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
+    <img id="lightbox-img" src="" alt="Visualização em tamanho original">
+    <div class="lightbox-bar">
+      <span id="lightbox-meta"></span>
+      <button id="lightbox-close" type="button" class="btn">Fechar</button>
+    </div>
   </div>
 
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
