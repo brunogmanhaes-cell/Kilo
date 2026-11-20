@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_login import login_required
+from flask_login import current_user, login_required
 import oracledb
 
 from app.compression import (
@@ -42,7 +42,7 @@ def _fetch_image_aggregates(cursor: oracledb.Cursor, note_id: int) -> tuple[int,
 @notes_api_bp.get("")
 @login_required
 def list_notes():
-    """Lista todas as notas sem trafegar CONTENT_ZLIB, com resumo de economia."""
+    """Lista todas as notas do usuário autenticado com resumo de economia."""
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -58,6 +58,7 @@ def list_notes():
                     COUNT(i.ID) AS IMG_COUNT
                 FROM NOTES n
                 LEFT JOIN NOTE_IMAGES i ON i.NOTE_ID = n.ID
+                WHERE n.USER_ID = :user_id
                 GROUP BY
                     n.ID,
                     n.TITLE,
@@ -65,7 +66,8 @@ def list_notes():
                     n.COMP_TEXT_BYTES,
                     n.UPDATED_AT
                 ORDER BY n.UPDATED_AT DESC
-                """
+                """,
+                {"user_id": current_user.user_id},
             )
             rows = cursor.fetchall()
 
@@ -92,7 +94,7 @@ def list_notes():
 @notes_api_bp.post("")
 @login_required
 def create_note():
-    """Cria uma nova nota comprimida com zlib."""
+    """Cria uma nova nota pertencente ao usuário autenticado."""
     payload = request.get_json(silent=True) or {}
     title = _normalize_title(payload.get("title"))
     content = payload.get("content")
@@ -106,11 +108,12 @@ def create_note():
             out_id = cursor.var(oracledb.NUMBER)
             cursor.execute(
                 """
-                INSERT INTO NOTES (TITLE, CONTENT_ZLIB, RAW_TEXT_BYTES, COMP_TEXT_BYTES)
-                VALUES (:title, :content_zlib, :raw_bytes, :comp_bytes)
+                INSERT INTO NOTES (USER_ID, TITLE, CONTENT_ZLIB, RAW_TEXT_BYTES, COMP_TEXT_BYTES)
+                VALUES (:user_id, :title, :content_zlib, :raw_bytes, :comp_bytes)
                 RETURNING ID INTO :out_id
                 """,
                 {
+                    "user_id": current_user.user_id,
                     "title": title,
                     "content_zlib": comp_blob if comp_blob else None,
                     "raw_bytes": raw_text_bytes,
@@ -157,7 +160,7 @@ def create_note():
 @notes_api_bp.get("/<int:note_id>")
 @login_required
 def get_note(note_id: int):
-    """Carrega nota específica e descomprime CONTENT_ZLIB em memória."""
+    """Carrega nota do usuário autenticado e descomprime CONTENT_ZLIB por completo."""
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -171,9 +174,9 @@ def get_note(note_id: int):
                     CREATED_AT,
                     UPDATED_AT
                 FROM NOTES
-                WHERE ID = :note_id
+                WHERE ID = :note_id AND USER_ID = :user_id
                 """,
-                {"note_id": note_id},
+                {"note_id": note_id, "user_id": current_user.user_id},
             )
             row = cursor.fetchone()
             if not row:
@@ -209,7 +212,7 @@ def get_note(note_id: int):
 @notes_api_bp.put("/<int:note_id>")
 @login_required
 def update_note(note_id: int):
-    """Atualiza nota comprimida e limpa imagens órfãs removidas do HTML."""
+    """Atualiza nota comprimida do usuário autenticado e limpa imagens órfãs."""
     payload = request.get_json(silent=True) or {}
     title = _normalize_title(payload.get("title"))
     content = payload.get("content")
@@ -230,7 +233,7 @@ def update_note(note_id: int):
                     RAW_TEXT_BYTES = :raw_bytes,
                     COMP_TEXT_BYTES = :comp_bytes,
                     UPDATED_AT = CURRENT_TIMESTAMP
-                WHERE ID = :note_id
+                WHERE ID = :note_id AND USER_ID = :user_id
                 """,
                 {
                     "title": title,
@@ -238,12 +241,12 @@ def update_note(note_id: int):
                     "raw_bytes": raw_text_bytes,
                     "comp_bytes": comp_text_bytes,
                     "note_id": note_id,
+                    "user_id": current_user.user_id,
                 },
             )
             if cursor.rowcount == 0:
                 return jsonify({"error": "Nota não encontrada."}), 404
 
-            # Garbage collection de imagens removidas do corpo da nota
             if not referenced_ids:
                 cursor.execute(
                     "DELETE FROM NOTE_IMAGES WHERE NOTE_ID = :note_id",
@@ -294,12 +297,12 @@ def update_note(note_id: int):
 @notes_api_bp.delete("/<int:note_id>")
 @login_required
 def delete_note(note_id: int):
-    """Remove a nota; imagens associadas são limpas via ON DELETE CASCADE."""
+    """Remove nota do usuário autenticado; imagens são limpas via ON DELETE CASCADE."""
     with get_connection(commit=True) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
-                "DELETE FROM NOTES WHERE ID = :note_id",
-                {"note_id": note_id},
+                "DELETE FROM NOTES WHERE ID = :note_id AND USER_ID = :user_id",
+                {"note_id": note_id, "user_id": current_user.user_id},
             )
             if cursor.rowcount == 0:
                 return jsonify({"error": "Nota não encontrada."}), 404
