@@ -86,9 +86,9 @@ function formatDateLabel(isoDate: string): string {
 }
 
 function updateSavingsDisplay(metrics: NoteMetrics | null): void {
-  if (!metrics) {
-    elSavingsStat.textContent = "—";
-    elSavingsStat.title = "Economia de armazenamento no Oracle";
+  if (!metrics || metrics.raw_bytes <= 0) {
+    elSavingsStat.textContent = "";
+    elSavingsStat.title = "";
     return;
   }
 
@@ -379,7 +379,7 @@ async function bootstrap(): Promise<void> {
       setSaveStatus("Enviando imagem…", "saving");
     },
     onImageUploaded: (result: UploadImageResponse) => {
-      const msg = `Imagem salva (original): ${formatBytes(result.raw_bytes)} → ${formatBytes(result.compressed_bytes)} (-${result.saved_percent.toFixed(1)}%)`;
+      const msg = `Imagem adicionada · ${formatBytes(result.raw_bytes)} → ${formatBytes(result.compressed_bytes)} (-${result.saved_percent.toFixed(1)}%)`;
       showToast(msg);
       state.dirty = true;
       void saveActiveNote();

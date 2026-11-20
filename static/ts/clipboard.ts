@@ -105,7 +105,7 @@ export function attachPasteHandler(options: PasteHandlerOptions): void {
       const placeholder = document.createElement("span");
       placeholder.className = "paste-placeholder";
       placeholder.setAttribute("contenteditable", "false");
-      placeholder.textContent = "Enviando imagem em qualidade original…";
+      placeholder.textContent = "Enviando imagem…";
 
       const range = getEditorRange(editor);
       insertNodeAtRange(editor, range, placeholder);

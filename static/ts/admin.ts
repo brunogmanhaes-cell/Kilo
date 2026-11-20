@@ -154,7 +154,7 @@ function clearSelectedNote(): void {
   elNoteEmpty.classList.remove("hidden");
   elNoteView.classList.add("hidden");
   elBtnExportPng.disabled = true;
-  elSavingsStat.textContent = "—";
+  elSavingsStat.textContent = "";
 }
 
 function renderUserNotesList(activeId: number | null): void {

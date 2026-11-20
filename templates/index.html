@@ -1,9 +1,11 @@
+{% from "_brand.html" import brand_mark %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kilo</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
   <script>
     (function () {
       var t = localStorage.getItem("kilo-theme");
@@ -19,7 +21,7 @@
   <div class="app-shell">
     <aside class="sidebar">
       <div class="sidebar-top">
-        <span class="wordmark">Kilo</span>
+        {{ brand_mark(url_for('views.index')) }}
         <button id="btn-new-note" type="button" class="btn btn-primary" title="Nova nota">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Nova
@@ -31,7 +33,7 @@
           id="search-input"
           type="search"
           class="input input-sm"
-          placeholder="Buscar notas…"
+          placeholder="Buscar…"
           aria-label="Buscar notas"
         >
       </div>
@@ -104,9 +106,9 @@
           </button>
           <div id="popover-text-color" class="color-popover hidden">
             <div class="swatch-grid">
-              <button type="button" class="swatch" data-text-color="#18181b" style="background:#18181b" title="Preto"></button>
-              <button type="button" class="swatch" data-text-color="#f4f4f5" style="background:#f4f4f5" title="Branco"></button>
-              <button type="button" class="swatch" data-text-color="#71717a" style="background:#71717a" title="Cinza"></button>
+              <button type="button" class="swatch" data-text-color="#000000" style="background:#000000" title="Preto"></button>
+              <button type="button" class="swatch" data-text-color="#ffffff" style="background:#ffffff" title="Branco"></button>
+              <button type="button" class="swatch" data-text-color="#737373" style="background:#737373" title="Cinza"></button>
               <button type="button" class="swatch" data-text-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
               <button type="button" class="swatch" data-text-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
               <button type="button" class="swatch" data-text-color="#ca8a04" style="background:#ca8a04" title="Âmbar"></button>
@@ -115,11 +117,11 @@
               <button type="button" class="swatch" data-text-color="#2563eb" style="background:#2563eb" title="Azul"></button>
               <button type="button" class="swatch" data-text-color="#7c3aed" style="background:#7c3aed" title="Roxo"></button>
               <button type="button" class="swatch" data-text-color="#db2777" style="background:#db2777" title="Rosa"></button>
-              <button type="button" class="swatch" data-text-color="#60a5fa" style="background:#60a5fa" title="Azul claro"></button>
+              <button type="button" class="swatch" data-text-color="#a3a3a3" style="background:#a3a3a3" title="Prata"></button>
             </div>
             <div class="popover-row">
               <label for="input-text-color">Personalizada</label>
-              <input id="input-text-color" type="color" value="#2563eb">
+              <input id="input-text-color" type="color" value="#000000">
               <button id="btn-reset-text-color" type="button" class="btn btn-ghost">Padrão</button>
             </div>
           </div>
@@ -128,7 +130,7 @@
         <div class="toolbar-group">
           <button id="btn-bg-color" type="button" class="tb-btn" title="Cor de fundo do texto" disabled>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
-            <span id="bg-color-bar" class="color-indicator" style="background:#fef08a"></span>
+            <span id="bg-color-bar" class="color-indicator" style="background:#e5e5e5"></span>
           </button>
           <div id="popover-bg-color" class="color-popover hidden">
             <div class="swatch-grid">
@@ -137,17 +139,17 @@
               <button type="button" class="swatch" data-bg-color="#bfdbfe" style="background:#bfdbfe" title="Azul"></button>
               <button type="button" class="swatch" data-bg-color="#fbcfe8" style="background:#fbcfe8" title="Rosa"></button>
               <button type="button" class="swatch" data-bg-color="#e9d5ff" style="background:#e9d5ff" title="Lavanda"></button>
-              <button type="button" class="swatch" data-bg-color="#fed7aa" style="background:#fed7aa" title="Pêssego"></button>
+              <button type="button" class="swatch" data-bg-color="#e5e5e5" style="background:#e5e5e5" title="Cinza claro"></button>
               <button type="button" class="swatch" data-bg-color="#854d0e" style="background:#854d0e" title="Âmbar escuro"></button>
               <button type="button" class="swatch" data-bg-color="#14532d" style="background:#14532d" title="Verde escuro"></button>
               <button type="button" class="swatch" data-bg-color="#1e3a8a" style="background:#1e3a8a" title="Azul escuro"></button>
               <button type="button" class="swatch" data-bg-color="#7f1d1d" style="background:#7f1d1d" title="Vinho"></button>
               <button type="button" class="swatch" data-bg-color="#581c87" style="background:#581c87" title="Roxo escuro"></button>
-              <button type="button" class="swatch" data-bg-color="#27272a" style="background:#27272a" title="Grafite"></button>
+              <button type="button" class="swatch" data-bg-color="#262626" style="background:#262626" title="Grafite"></button>
             </div>
             <div class="popover-row">
               <label for="input-bg-color">Personalizada</label>
-              <input id="input-bg-color" type="color" value="#fef08a">
+              <input id="input-bg-color" type="color" value="#e5e5e5">
               <button id="btn-reset-bg-color" type="button" class="btn btn-ghost">Sem cor</button>
             </div>
           </div>
@@ -162,9 +164,8 @@
 
       <div class="editor-scroll">
         <div id="editor-empty" class="editor-empty">
-          <h2>Nenhuma nota aberta</h2>
-          <p>Crie uma nova nota ou selecione um registro na lista. Pressione Ctrl+V para colar imagens sem perda de qualidade.</p>
-          <button id="btn-empty-new" type="button" class="btn btn-primary">Criar nota</button>
+          <p>Nenhuma nota selecionada</p>
+          <button id="btn-empty-new" type="button" class="btn btn-primary">Nova nota</button>
         </div>
 
         <div id="editor-canvas" class="editor-canvas hidden">
@@ -180,14 +181,13 @@
             class="note-editor"
             contenteditable="true"
             spellcheck="true"
-            data-placeholder="Escreva aqui ou cole imagens com Ctrl+V…"
+            data-placeholder="Comece a escrever…"
           ></div>
         </div>
       </div>
 
       <footer class="workspace-footer">
-        <span>Ctrl+V cola imagens em qualidade original · Ctrl+S salva</span>
-        <span id="savings-stat" class="savings-stat">—</span>
+        <span id="savings-stat" class="savings-stat"></span>
       </footer>
     </main>
   </div>
