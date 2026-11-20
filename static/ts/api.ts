@@ -38,11 +38,46 @@ export interface UpdateNoteResponse {
 export interface UploadImageResponse {
   id: number;
   url: string;
+  mime_type: string;
+  lossless: boolean;
   width: number;
   height: number;
   raw_bytes: number;
   compressed_bytes: number;
   saved_percent: number;
+}
+
+export interface AdminUserSummary {
+  id: number;
+  username: string;
+  email: string;
+  is_admin: boolean;
+  created_at: string;
+  note_count: number;
+  image_count: number;
+  raw_bytes: number;
+  compressed_bytes: number;
+  saved_percent: number;
+  last_activity: string;
+}
+
+export interface AdminUserNotesResponse {
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+  };
+  notes: NoteSummary[];
+}
+
+export interface AdminNoteDetail extends NoteDetail {
+  owner: {
+    id: number;
+    username: string;
+    email: string;
+  };
 }
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -72,7 +107,7 @@ export function listNotes(): Promise<NoteSummary[]> {
   return requestJson<NoteSummary[]>("/api/notes");
 }
 
-export function createNote(title = "Nova Nota", content = ""): Promise<NoteDetail> {
+export function createNote(title = "Sem título", content = ""): Promise<NoteDetail> {
   return requestJson<NoteDetail>("/api/notes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -113,6 +148,18 @@ export function uploadImage(noteId: number, file: File | Blob): Promise<UploadIm
   });
 }
 
+export function listAdminUsers(): Promise<AdminUserSummary[]> {
+  return requestJson<AdminUserSummary[]>("/api/admin/users");
+}
+
+export function listAdminUserNotes(userId: number): Promise<AdminUserNotesResponse> {
+  return requestJson<AdminUserNotesResponse>(`/api/admin/users/${userId}/notes`);
+}
+
+export function getAdminNote(noteId: number): Promise<AdminNoteDetail> {
+  return requestJson<AdminNoteDetail>(`/api/admin/notes/${noteId}`);
+}
+
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) {
     return "0 B";
@@ -130,11 +177,9 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(decimals)} ${units[unitIndex]}`;
 }
 
-export function formatSavingsBadge(metrics: NoteSummaryMetrics): string {
+export function formatCompactSavings(metrics: NoteSummaryMetrics): string {
   if (metrics.raw_bytes <= 0) {
-    return "Original: 0 B → Salvo: 0 B (0%)";
+    return "0 B";
   }
-  const rawLabel = formatBytes(metrics.raw_bytes);
-  const compLabel = formatBytes(metrics.compressed_bytes);
-  return `Original: ${rawLabel} → Salvo: ${compLabel} (-${metrics.saved_percent.toFixed(1)}%)`;
+  return `${formatBytes(metrics.raw_bytes)} → ${formatBytes(metrics.compressed_bytes)} · -${metrics.saved_percent.toFixed(1)}%`;
 }

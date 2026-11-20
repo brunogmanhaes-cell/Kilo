@@ -1,9 +1,13 @@
-import { createNote, deleteNote, formatBytes, formatSavingsBadge, getNote, listNotes, updateNote, } from "./api.js";
-import { attachPasteHandler } from "./clipboard.js";
+import { createNote, deleteNote, formatBytes, formatCompactSavings, getNote, listNotes, updateNote, } from "./api.js";
+import { attachImageLightbox, attachPasteHandler } from "./clipboard.js";
+import { initEditorToolbar } from "./editorToolbar.js";
+import { exportNoteToPng } from "./exportPng.js";
+import { initThemeToggle } from "./theme.js";
 const AUTOSAVE_DELAY_MS = 1000;
 const state = {
     notes: [],
     activeNoteId: null,
+    activeUpdatedAt: "",
     dirty: false,
     isSaving: false,
     autosaveTimer: null,
@@ -12,14 +16,17 @@ const elNotesList = document.getElementById("notes-list");
 const elSearchInput = document.getElementById("search-input");
 const elBtnNewNote = document.getElementById("btn-new-note");
 const elBtnEmptyNew = document.getElementById("btn-empty-new");
+const elEditorEmpty = document.getElementById("editor-empty");
+const elEditorCanvas = document.getElementById("editor-canvas");
 const elNoteTitle = document.getElementById("note-title");
 const elNoteEditor = document.getElementById("note-editor");
-const elEditorEmpty = document.getElementById("editor-empty");
-const elBtnSave = document.getElementById("btn-save-note");
+const elBtnExportPng = document.getElementById("btn-export-png");
 const elBtnDelete = document.getElementById("btn-delete-note");
 const elSaveStatus = document.getElementById("save-status");
-const elSavingsBadge = document.getElementById("savings-badge");
+const elSaveStatusText = document.getElementById("save-status-text");
+const elSavingsStat = document.getElementById("savings-stat");
 const elToastContainer = document.getElementById("toast-container");
+let toolbar;
 function showToast(message, isError = false) {
     const toast = document.createElement("div");
     toast.className = isError ? "toast error" : "toast";
@@ -30,8 +37,8 @@ function showToast(message, isError = false) {
     }, 3600);
 }
 function setSaveStatus(text, mode = "idle") {
-    elSaveStatus.textContent = text;
-    elSaveStatus.className = mode === "idle" ? "save-status" : `save-status ${mode}`;
+    elSaveStatusText.textContent = text;
+    elSaveStatus.className = mode === "idle" ? "status-indicator" : `status-indicator ${mode}`;
 }
 function formatDateLabel(isoDate) {
     if (!isoDate) {
@@ -50,31 +57,30 @@ function formatDateLabel(isoDate) {
 }
 function updateSavingsDisplay(metrics) {
     if (!metrics) {
-        elSavingsBadge.textContent = "Sem dados";
-        elSavingsBadge.className = "savings-badge neutral";
-        elSavingsBadge.title = "Economia de armazenamento no Oracle";
+        elSavingsStat.textContent = "—";
+        elSavingsStat.title = "Economia de armazenamento no Oracle";
         return;
     }
-    elSavingsBadge.textContent = formatSavingsBadge(metrics);
-    elSavingsBadge.className = metrics.raw_bytes > 0 ? "savings-badge" : "savings-badge neutral";
-    elSavingsBadge.title = [
+    elSavingsStat.textContent = formatCompactSavings(metrics);
+    elSavingsStat.title = [
         `Texto: ${formatBytes(metrics.raw_text_bytes)} → ${formatBytes(metrics.compressed_text_bytes)}`,
         `Imagens (${metrics.image_count}): ${formatBytes(metrics.raw_image_bytes)} → ${formatBytes(metrics.compressed_image_bytes)}`,
     ].join(" | ");
 }
 function setEditorEnabled(enabled) {
-    elNoteTitle.disabled = !enabled;
-    elBtnSave.disabled = !enabled;
+    elBtnExportPng.disabled = !enabled;
     elBtnDelete.disabled = !enabled;
+    toolbar.setEnabled(enabled);
     if (enabled) {
         elEditorEmpty.classList.add("hidden");
-        elNoteEditor.classList.remove("hidden");
+        elEditorCanvas.classList.remove("hidden");
     }
     else {
         elEditorEmpty.classList.remove("hidden");
-        elNoteEditor.classList.add("hidden");
+        elEditorCanvas.classList.add("hidden");
         elNoteTitle.value = "";
         elNoteEditor.innerHTML = "";
+        state.activeUpdatedAt = "";
         updateSavingsDisplay(null);
         setSaveStatus("Pronto");
     }
@@ -88,7 +94,7 @@ function renderNotesList() {
     if (filtered.length === 0) {
         const empty = document.createElement("div");
         empty.className = "notes-empty";
-        empty.textContent = query ? "Nenhuma nota corresponde ao filtro." : "Nenhuma nota criada ainda.";
+        empty.textContent = query ? "Nenhum resultado." : "Nenhuma nota ainda.";
         elNotesList.appendChild(empty);
         return;
     }
@@ -99,19 +105,11 @@ function renderNotesList() {
         const titleEl = document.createElement("div");
         titleEl.className = "note-item-title";
         titleEl.textContent = note.title || "Sem título";
-        const metaEl = document.createElement("div");
-        metaEl.className = "note-item-meta";
-        const dateEl = document.createElement("span");
+        const dateEl = document.createElement("div");
+        dateEl.className = "note-item-date";
         dateEl.textContent = formatDateLabel(note.updated_at);
-        metaEl.appendChild(dateEl);
-        if (note.metrics.raw_bytes > 0) {
-            const pillEl = document.createElement("span");
-            pillEl.className = "note-item-pill";
-            pillEl.textContent = `-${note.metrics.saved_percent.toFixed(0)}%`;
-            metaEl.appendChild(pillEl);
-        }
         item.appendChild(titleEl);
-        item.appendChild(metaEl);
+        item.appendChild(dateEl);
         item.addEventListener("click", () => {
             void selectNote(note.id);
         });
@@ -125,6 +123,7 @@ function getCleanEditorHtml() {
 }
 function applyNoteDetail(detail) {
     state.activeNoteId = detail.id;
+    state.activeUpdatedAt = detail.updated_at;
     state.dirty = false;
     setEditorEnabled(true);
     elNoteTitle.value = detail.title;
@@ -149,20 +148,20 @@ async function selectNote(noteId) {
         await saveActiveNote();
     }
     try {
-        setSaveStatus("Carregando…", "saving");
+        setSaveStatus("Abrindo…", "saving");
         const detail = await getNote(noteId);
         applyNoteDetail(detail);
     }
     catch (err) {
-        setSaveStatus("Erro ao carregar", "error");
-        showToast(err instanceof Error ? err.message : "Erro ao carregar nota.", true);
+        setSaveStatus("Erro ao abrir", "error");
+        showToast(err instanceof Error ? err.message : "Erro ao abrir nota.", true);
     }
 }
 async function handleCreateNote() {
     if (state.dirty && state.activeNoteId !== null) {
         await saveActiveNote();
     }
-    const created = await createNote("Nova Nota", "");
+    const created = await createNote("Sem título", "");
     upsertNoteSummary({
         id: created.id,
         title: created.title,
@@ -190,6 +189,7 @@ async function saveActiveNote() {
     try {
         const updated = await updateNote(noteId, title, content);
         state.dirty = false;
+        state.activeUpdatedAt = updated.updated_at;
         updateSavingsDisplay(updated.metrics);
         upsertNoteSummary({
             id: updated.id,
@@ -225,8 +225,7 @@ async function handleDeleteActiveNote() {
         return;
     }
     const noteId = state.activeNoteId;
-    const confirmed = window.confirm("Excluir esta nota e todas as suas imagens permanentemente?");
-    if (!confirmed) {
+    if (!window.confirm("Excluir esta nota e todas as suas imagens permanentemente?")) {
         return;
     }
     if (state.autosaveTimer !== null) {
@@ -252,6 +251,26 @@ async function handleDeleteActiveNote() {
         showToast(err instanceof Error ? err.message : "Erro ao excluir nota.", true);
     }
 }
+async function handleExportPng() {
+    if (state.activeNoteId === null) {
+        return;
+    }
+    elBtnExportPng.disabled = true;
+    try {
+        await exportNoteToPng({
+            title: elNoteTitle.value.trim() || "Sem título",
+            updatedAt: formatDateLabel(state.activeUpdatedAt),
+            contentHtml: getCleanEditorHtml(),
+        });
+        showToast("PNG exportado.");
+    }
+    catch (err) {
+        showToast(err instanceof Error ? err.message : "Falha ao exportar PNG.", true);
+    }
+    finally {
+        elBtnExportPng.disabled = state.activeNoteId === null;
+    }
+}
 async function ensureActiveNoteId() {
     if (state.activeNoteId !== null) {
         return state.activeNoteId;
@@ -259,6 +278,12 @@ async function ensureActiveNoteId() {
     return handleCreateNote();
 }
 async function bootstrap() {
+    initThemeToggle(document.getElementById("theme-toggle"));
+    toolbar = initEditorToolbar({
+        editor: elNoteEditor,
+        onContentChange: scheduleAutosave,
+    });
+    attachImageLightbox(elNoteEditor);
     elBtnNewNote.addEventListener("click", () => {
         void handleCreateNote().catch((err) => {
             showToast(err instanceof Error ? err.message : "Erro ao criar nota.", true);
@@ -269,15 +294,13 @@ async function bootstrap() {
             showToast(err instanceof Error ? err.message : "Erro ao criar nota.", true);
         });
     });
-    elBtnSave.addEventListener("click", () => {
-        void saveActiveNote();
+    elBtnExportPng.addEventListener("click", () => {
+        void handleExportPng();
     });
     elBtnDelete.addEventListener("click", () => {
         void handleDeleteActiveNote();
     });
-    elSearchInput.addEventListener("input", () => {
-        renderNotesList();
-    });
+    elSearchInput.addEventListener("input", renderNotesList);
     elNoteTitle.addEventListener("input", scheduleAutosave);
     elNoteEditor.addEventListener("input", scheduleAutosave);
     document.addEventListener("keydown", (event) => {
@@ -290,11 +313,11 @@ async function bootstrap() {
         editor: elNoteEditor,
         ensureNoteId: ensureActiveNoteId,
         onUploadStart: () => {
-            setSaveStatus("Comprimindo imagem…", "saving");
+            setSaveStatus("Enviando imagem…", "saving");
         },
         onImageUploaded: (result) => {
-            const savedMsg = `WebP: ${formatBytes(result.raw_bytes)} → ${formatBytes(result.compressed_bytes)} (-${result.saved_percent.toFixed(1)}%)`;
-            showToast(savedMsg);
+            const msg = `Imagem salva (original): ${formatBytes(result.raw_bytes)} → ${formatBytes(result.compressed_bytes)} (-${result.saved_percent.toFixed(1)}%)`;
+            showToast(msg);
             state.dirty = true;
             void saveActiveNote();
         },

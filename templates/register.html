@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta — Kilo</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem("kilo-theme");
+      if (t !== "light" && t !== "dark") {
+        t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="auth-page">
+  <button id="theme-toggle" type="button" class="btn btn-ghost btn-icon auth-theme-corner" title="Alternar tema" aria-label="Alternar tema"></button>
+
+  <main class="auth-box">
+    <h1 class="auth-title">Criar conta</h1>
+    <p class="auth-subtitle">Cadastro gratuito com armazenamento otimizado</p>
+
+    {% if error %}
+      <div class="auth-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('views.register') }}">
+      <div class="field">
+        <label for="username">Nome de usuário</label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          class="input"
+          value="{{ username or '' }}"
+          minlength="3"
+          maxlength="64"
+          autocomplete="username"
+          required
+          autofocus
+        >
+      </div>
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          class="input"
+          value="{{ email or '' }}"
+          autocomplete="email"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          class="input"
+          minlength="6"
+          autocomplete="new-password"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="confirm_password">Confirmar senha</label>
+        <input
+          id="confirm_password"
+          name="confirm_password"
+          type="password"
+          class="input"
+          minlength="6"
+          autocomplete="new-password"
+          required
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+    </form>
+
+    <div class="auth-footer-link">
+      Já possui cadastro? <a href="{{ url_for('views.login') }}">Entrar</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initThemeToggle } from "{{ url_for('static', filename='js/theme.js') }}";
+    initThemeToggle(document.getElementById("theme-toggle"));
+  </script>
+</body>
+</html>
