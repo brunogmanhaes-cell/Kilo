@@ -62,6 +62,7 @@ export async function exportNoteToPng(options) {
     const width = 820;
     const card = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
     card.setAttribute("style", [
+        `--text:${fg}`,
         `width:${width}px`,
         "box-sizing:border-box",
         "padding:44px 48px",

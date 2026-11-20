@@ -77,6 +77,7 @@ export async function exportNoteToPng(options: ExportPngOptions): Promise<void> 
   card.setAttribute(
     "style",
     [
+      `--text:${fg}`,
       `width:${width}px`,
       "box-sizing:border-box",
       "padding:44px 48px",

@@ -20,7 +20,7 @@
 <body>
   <div class="auth-split">
     <aside class="auth-brand-panel">
-      <div>{{ brand_mark(url_for('views.login')) }}</div>
+      <div>{{ brand_mark(url_for('views.login'), 'desktop') }}</div>
 
       <div class="auth-brand-center">
         {{ brand_hero_pencil() }}
@@ -28,14 +28,14 @@
         <p class="auth-hero-line">Notas densas. Interface silenciosa.</p>
       </div>
 
-      <div class="auth-brand-meta">100kg · P&amp;B</div>
+      <div class="auth-brand-meta">210KG · P&amp;B</div>
     </aside>
 
     <main class="auth-form-panel">
       <button id="theme-toggle" type="button" class="btn btn-ghost btn-icon auth-theme-corner" title="Alternar tema" aria-label="Alternar tema"></button>
 
       <div class="auth-form-wrap">
-        <div class="auth-mobile-brand">{{ brand_mark(url_for('views.login')) }}</div>
+        <div class="auth-mobile-brand">{{ brand_mark(url_for('views.login'), 'mobile') }}</div>
 
         <h2 class="auth-title">Entrar</h2>
 

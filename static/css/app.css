@@ -108,8 +108,8 @@ select {
 }
 
 .brand-pencil-mini {
-  width: 48px;
-  height: 18px;
+  width: 70px;
+  height: 48px;
   display: block;
   flex-shrink: 0;
 }
@@ -598,6 +598,58 @@ select {
   background: var(--text);
 }
 
+.color-indicator.adaptive {
+  background: linear-gradient(90deg, #000000 50%, #ffffff 50%);
+  border: 1px solid var(--border-strong);
+}
+
+.adaptive-color-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.adaptive-color-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.adaptive-color-btn.active {
+  border-color: var(--text);
+}
+
+.adaptive-color-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.swatch-adaptive {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(135deg, #000000 50%, #ffffff 50%);
+  flex-shrink: 0;
+}
+
+.adaptive-color-tag {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
 .color-popover {
   position: absolute;
   top: 34px;
@@ -768,7 +820,7 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  height: 54px;
+  height: 60px;
   padding: 0 24px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-sidebar);

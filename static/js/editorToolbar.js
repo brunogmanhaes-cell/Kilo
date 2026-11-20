@@ -6,7 +6,7 @@ export function initEditorToolbar(options) {
     const popoverTextColor = document.getElementById("popover-text-color");
     const textColorBar = document.getElementById("text-color-bar");
     const inputTextColor = document.getElementById("input-text-color");
-    const btnResetTextColor = document.getElementById("btn-reset-text-color");
+    const btnAdaptiveTextColor = document.getElementById("btn-adaptive-text-color");
     const btnBgColor = document.getElementById("btn-bg-color");
     const popoverBgColor = document.getElementById("popover-bg-color");
     const bgColorBar = document.getElementById("bg-color-bar");
@@ -131,6 +131,26 @@ export function initEditorToolbar(options) {
             popoverBgColor.classList.remove("hidden");
         }
     });
+    const setAdaptiveIndicator = (active, fixedColor) => {
+        if (active) {
+            btnAdaptiveTextColor.classList.add("active");
+            textColorBar.classList.add("adaptive");
+            textColorBar.style.background = "";
+            btnTextColor.setAttribute("title", "Cor do texto (Adaptativa)");
+        }
+        else {
+            btnAdaptiveTextColor.classList.remove("active");
+            textColorBar.classList.remove("adaptive");
+            textColorBar.style.background = fixedColor || "var(--text)";
+            btnTextColor.setAttribute("title", `Cor do texto (${fixedColor || ""})`);
+        }
+    };
+    btnAdaptiveTextColor.addEventListener("mousedown", (event) => event.preventDefault());
+    btnAdaptiveTextColor.addEventListener("click", () => {
+        setAdaptiveIndicator(true);
+        applyInlineStyle("color", "var(--text)");
+        closePopovers();
+    });
     popoverTextColor.querySelectorAll("[data-text-color]").forEach((swatch) => {
         swatch.addEventListener("mousedown", (event) => event.preventDefault());
         swatch.addEventListener("click", () => {
@@ -138,19 +158,14 @@ export function initEditorToolbar(options) {
             if (!color) {
                 return;
             }
-            textColorBar.style.background = color;
+            setAdaptiveIndicator(false, color);
             applyInlineStyle("color", color);
             closePopovers();
         });
     });
     inputTextColor.addEventListener("input", () => {
-        textColorBar.style.background = inputTextColor.value;
+        setAdaptiveIndicator(false, inputTextColor.value);
         applyInlineStyle("color", inputTextColor.value);
-    });
-    btnResetTextColor.addEventListener("click", () => {
-        textColorBar.style.background = "var(--text)";
-        applyInlineStyle("color", "inherit");
-        closePopovers();
     });
     popoverBgColor.querySelectorAll("[data-bg-color]").forEach((swatch) => {
         swatch.addEventListener("mousedown", (event) => event.preventDefault());
@@ -190,6 +205,7 @@ export function initEditorToolbar(options) {
             range.insertNode(fragment);
         }
         captureRange();
+        setAdaptiveIndicator(true);
         onContentChange();
     });
     document.addEventListener("click", (event) => {
@@ -213,6 +229,9 @@ export function initEditorToolbar(options) {
             btnClearFormat.disabled = !enabled;
             if (!enabled) {
                 closePopovers();
+            }
+            else {
+                setAdaptiveIndicator(true);
             }
         },
     };
