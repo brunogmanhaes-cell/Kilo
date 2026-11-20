@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kilo Notes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dark.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="brand-name">Kilo Notes</span>
+          <span class="brand-tag">WebP + zlib · Oracle</span>
+        </div>
+        <button id="btn-new-note" type="button" class="btn btn-primary">+ Nova</button>
+      </div>
+
+      <div class="sidebar-search">
+        <input
+          id="search-input"
+          type="search"
+          class="input"
+          placeholder="Filtrar notas..."
+          aria-label="Filtrar notas"
+        >
+      </div>
+
+      <div id="notes-list" class="notes-list" role="list">
+        <div class="notes-empty">Carregando notas…</div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span>{{ admin_user }}</span>
+        <form method="post" action="{{ url_for('views.logout') }}">
+          <button type="submit" class="btn btn-ghost">Sair</button>
+        </form>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="workspace-header">
+        <input
+          id="note-title"
+          type="text"
+          class="note-title-input"
+          placeholder="Título da nota..."
+          maxlength="255"
+          disabled
+        >
+        <div class="workspace-actions">
+          <span id="save-status" class="save-status">Pronto</span>
+          <button id="btn-save-note" type="button" class="btn" disabled>Salvar</button>
+          <button id="btn-delete-note" type="button" class="btn btn-danger" disabled>Excluir</button>
+        </div>
+      </header>
+
+      <div class="editor-scroll">
+        <div id="editor-empty" class="editor-empty">
+          <h2>Nenhuma nota selecionada</h2>
+          <p>Crie uma nova nota ou selecione uma existente na barra lateral. Cole prints com Ctrl+V para comprimir automaticamente em WebP.</p>
+          <button id="btn-empty-new" type="button" class="btn btn-primary">Criar primeira nota</button>
+        </div>
+
+        <div
+          id="note-editor"
+          class="note-editor hidden"
+          contenteditable="true"
+          spellcheck="true"
+          data-placeholder="Comece a digitar ou pressione Ctrl+V para colar um print..."
+        ></div>
+      </div>
+
+      <footer class="status-bar">
+        <span id="status-hint">Ctrl+V envia prints como WebP (máx. 1280px) · Ctrl+S salva</span>
+        <span id="savings-badge" class="savings-badge neutral" title="Economia de armazenamento no Oracle">
+          Sem dados
+        </span>
+      </footer>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
