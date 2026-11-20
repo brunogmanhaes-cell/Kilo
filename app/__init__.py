@@ -4,7 +4,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from app.auth import login_manager
 from app.config import Config
 from app.db import init_db
-from app.routes import images_api_bp, notes_api_bp, views_bp
+from app.routes import admin_api_bp, images_api_bp, notes_api_bp, views_bp
 
 
 def create_app(config_object: type[Config] = Config) -> Flask:
@@ -22,6 +22,7 @@ def create_app(config_object: type[Config] = Config) -> Flask:
     app.register_blueprint(views_bp)
     app.register_blueprint(notes_api_bp)
     app.register_blueprint(images_api_bp)
+    app.register_blueprint(admin_api_bp)
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(_err: RequestEntityTooLarge):

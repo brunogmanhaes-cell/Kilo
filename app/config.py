@@ -1,8 +1,10 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+_ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=_ENV_PATH)
 
 
 def _parse_bool(value: str | None, default: bool = False) -> bool:
@@ -25,11 +27,12 @@ class Config:
     REMEMBER_COOKIE_SECURE: bool = SESSION_COOKIE_SECURE
     PERMANENT_SESSION_LIFETIME: timedelta = timedelta(days=30)
 
-    # Limite de upload (padrão 16 MB para prints 4K antes da compressão WebP)
+    # Limite de upload (padrão 16 MB para prints 4K antes da compressão)
     MAX_CONTENT_LENGTH: int = int(os.getenv("MAX_CONTENT_LENGTH", str(16 * 1024 * 1024)))
 
-    # Autenticação privada de usuário único
+    # Conta administradora sincronizada via ambiente
     ADMIN_USER: str = os.getenv("ADMIN_USER", "admin")
+    ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", f"{ADMIN_USER}@kilo.local")
     ADMIN_PASSWORD_HASH: str = os.getenv("ADMIN_PASSWORD_HASH", "")
 
     # Oracle Database (Thin Mode)
