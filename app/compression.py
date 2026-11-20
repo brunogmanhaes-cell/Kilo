@@ -44,6 +44,7 @@ _COLOR_VALUE_RE = re.compile(
     r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})|"
     r"rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|"
     r"rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(?:0|1|0?\.\d+)\s*\)|"
+    r"var\(--text\)|"
     r"transparent|inherit)$"
 )
 _FONT_SIZE_RE = re.compile(r"^(\d{1,2})px$", re.IGNORECASE)

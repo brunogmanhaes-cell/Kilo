@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.auth import login_manager
 from app.config import Config
@@ -15,6 +16,7 @@ def create_app(config_object: type[Config] = Config) -> Flask:
         static_folder="../static",
     )
     app.config.from_object(config_object)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)  # type: ignore[method-assign]
 
     login_manager.init_app(app)
     init_db(app)

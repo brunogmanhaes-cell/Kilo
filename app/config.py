@@ -18,10 +18,13 @@ class Config:
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-insecure-secret-change-in-production")
 
-    # Sessão e cookies
+    # Sessão e cookies (em produção no Render, ativa Secure cookie automaticamente)
     SESSION_COOKIE_HTTPONLY: bool = True
     SESSION_COOKIE_SAMESITE: str = "Lax"
-    SESSION_COOKIE_SECURE: bool = _parse_bool(os.getenv("SESSION_COOKIE_SECURE"), default=False)
+    SESSION_COOKIE_SECURE: bool = _parse_bool(
+        os.getenv("SESSION_COOKIE_SECURE"),
+        default=_parse_bool(os.getenv("RENDER"), default=False),
+    )
     REMEMBER_COOKIE_HTTPONLY: bool = True
     REMEMBER_COOKIE_SAMESITE: str = "Lax"
     REMEMBER_COOKIE_SECURE: bool = SESSION_COOKIE_SECURE
