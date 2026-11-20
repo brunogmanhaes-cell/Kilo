@@ -2,7 +2,7 @@ from flask import Blueprint, Response, jsonify, request
 from flask_login import current_user, login_required
 import oracledb
 
-from app.compression import compress_image_to_webp
+from app.compression import compress_image_lossless, decompress_image_payload
 from app.db import get_connection, read_blob
 
 images_api_bp = Blueprint("images_api", __name__, url_prefix="/api")
@@ -13,7 +13,7 @@ _CACHE_CONTROL = "public, max-age=31536000, immutable"
 @images_api_bp.post("/upload")
 @login_required
 def upload_image():
-    """Recebe imagem via Ctrl+V, comprime para armazenamento e vincula à nota do usuário."""
+    """Recebe imagem via Ctrl+V, comprime 100% lossless e vincula à nota do usuário."""
     raw_note_id = request.form.get("note_id", "").strip()
     try:
         note_id = int(raw_note_id)
@@ -28,7 +28,7 @@ def upload_image():
 
     raw_bytes = image_file.read()
     try:
-        compressed = compress_image_to_webp(raw_bytes)
+        compressed = compress_image_lossless(raw_bytes)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -51,6 +51,8 @@ def upload_image():
                     HEIGHT,
                     RAW_IMAGE_BYTES,
                     COMP_IMAGE_BYTES,
+                    MIME_TYPE,
+                    IS_ZLIB,
                     SHA256_HASH
                 )
                 VALUES (
@@ -60,6 +62,8 @@ def upload_image():
                     :height,
                     :raw_bytes,
                     :comp_bytes,
+                    :mime_type,
+                    :is_zlib,
                     :sha256_hash
                 )
                 RETURNING ID INTO :out_id
@@ -71,6 +75,8 @@ def upload_image():
                     "height": compressed.height,
                     "raw_bytes": compressed.raw_bytes,
                     "comp_bytes": compressed.compressed_bytes,
+                    "mime_type": compressed.mime_type,
+                    "is_zlib": 1 if compressed.is_zlib else 0,
                     "sha256_hash": compressed.sha256_hash,
                     "out_id": out_id,
                 },
@@ -87,6 +93,8 @@ def upload_image():
             {
                 "id": image_id,
                 "url": f"/api/images/{image_id}",
+                "mime_type": compressed.mime_type,
+                "lossless": True,
                 "width": compressed.width,
                 "height": compressed.height,
                 "raw_bytes": compressed.raw_bytes,
@@ -101,7 +109,7 @@ def upload_image():
 @images_api_bp.get("/images/<int:image_id>")
 @login_required
 def get_image(image_id: int):
-    """Entrega o binário da imagem para o dono da nota ou administrador."""
+    """Descomprime (se necessário) e entrega a imagem em qualidade original 100% lossless."""
     if_none_match = (request.headers.get("If-None-Match") or "").strip()
 
     with get_connection() as conn:
@@ -134,7 +142,7 @@ def get_image(image_id: int):
 
             cursor.execute(
                 """
-                SELECT i.IMAGE_WEBP, i.COMP_IMAGE_BYTES, n.USER_ID
+                SELECT i.IMAGE_WEBP, i.COMP_IMAGE_BYTES, i.MIME_TYPE, i.IS_ZLIB, n.USER_ID
                 FROM NOTE_IMAGES i
                 JOIN NOTES n ON n.ID = i.NOTE_ID
                 WHERE i.ID = :image_id
@@ -144,16 +152,17 @@ def get_image(image_id: int):
             row = cursor.fetchone()
             if not row:
                 return jsonify({"error": "Imagem não encontrada."}), 404
-            if int(row[2]) != current_user.user_id and not current_user.is_admin:
+            if int(row[4]) != current_user.user_id and not current_user.is_admin:
                 return jsonify({"error": "Imagem não encontrada."}), 404
 
-    img_bytes = read_blob(row[0])
+    img_bytes = decompress_image_payload(read_blob(row[0]), bool(row[3]))
+    mime_type = row[2] or "image/webp"
     etag = f'"img-{image_id}-{int(row[1])}"'
 
     return Response(
         img_bytes,
         status=200,
-        mimetype="image/webp",
+        mimetype=mime_type,
         headers={
             "Cache-Control": _CACHE_CONTROL,
             "ETag": etag,

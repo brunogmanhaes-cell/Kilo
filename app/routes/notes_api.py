@@ -8,6 +8,7 @@ from app.compression import (
     compress_text,
     decompress_text,
     extract_referenced_image_ids,
+    sanitize_note_html,
 )
 from app.db import format_iso, get_connection, read_blob
 
@@ -94,12 +95,11 @@ def list_notes():
 @notes_api_bp.post("")
 @login_required
 def create_note():
-    """Cria uma nova nota pertencente ao usuário autenticado."""
+    """Cria uma nova nota sanitizada e comprimida com zlib."""
     payload = request.get_json(silent=True) or {}
     title = _normalize_title(payload.get("title"))
-    content = payload.get("content")
-    if not isinstance(content, str):
-        content = ""
+    raw_content = payload.get("content")
+    content = sanitize_note_html(raw_content) if isinstance(raw_content, str) else ""
 
     comp_blob, raw_text_bytes, comp_text_bytes = compress_text(content)
 
@@ -212,12 +212,11 @@ def get_note(note_id: int):
 @notes_api_bp.put("/<int:note_id>")
 @login_required
 def update_note(note_id: int):
-    """Atualiza nota comprimida do usuário autenticado e limpa imagens órfãs."""
+    """Sanitiza, comprime e atualiza nota do usuário autenticado, limpando imagens órfãs."""
     payload = request.get_json(silent=True) or {}
     title = _normalize_title(payload.get("title"))
-    content = payload.get("content")
-    if not isinstance(content, str):
-        content = ""
+    raw_content = payload.get("content")
+    content = sanitize_note_html(raw_content) if isinstance(raw_content, str) else ""
 
     comp_blob, raw_text_bytes, comp_text_bytes = compress_text(content)
     referenced_ids = extract_referenced_image_ids(content)
