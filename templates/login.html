@@ -1,9 +1,11 @@
+{% from "_brand.html" import brand_mark, brand_hero_pencil %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entrar — Kilo</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
   <script>
     (function () {
       var t = localStorage.getItem("kilo-theme");
@@ -15,55 +17,74 @@
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
-<body class="auth-page">
-  <button id="theme-toggle" type="button" class="btn btn-ghost btn-icon auth-theme-corner" title="Alternar tema" aria-label="Alternar tema"></button>
+<body>
+  <div class="auth-split">
+    <aside class="auth-brand-panel">
+      <div>{{ brand_mark(url_for('views.login')) }}</div>
 
-  <main class="auth-box">
-    <h1 class="auth-title">Entrar no Kilo</h1>
-    <p class="auth-subtitle">Acesse suas notas privadas</p>
-
-    {% if error %}
-      <div class="auth-error" role="alert">{{ error }}</div>
-    {% endif %}
-
-    <form method="post" action="{{ url_for('views.login') }}">
-      {% if next_url %}
-        <input type="hidden" name="next" value="{{ next_url }}">
-      {% endif %}
-
-      <div class="field">
-        <label for="identifier">Usuário ou e-mail</label>
-        <input
-          id="identifier"
-          name="identifier"
-          type="text"
-          class="input"
-          value="{{ identifier or '' }}"
-          autocomplete="username"
-          required
-          autofocus
-        >
+      <div class="auth-brand-center">
+        {{ brand_hero_pencil() }}
+        <h1 class="auth-hero-title">Kilo</h1>
+        <p class="auth-hero-line">Notas densas. Interface silenciosa.</p>
       </div>
 
-      <div class="field">
-        <label for="password">Senha</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          class="input"
-          autocomplete="current-password"
-          required
-        >
+      <div class="auth-brand-meta">100kg · P&amp;B</div>
+    </aside>
+
+    <main class="auth-form-panel">
+      <button id="theme-toggle" type="button" class="btn btn-ghost btn-icon auth-theme-corner" title="Alternar tema" aria-label="Alternar tema"></button>
+
+      <div class="auth-form-wrap">
+        <div class="auth-mobile-brand">{{ brand_mark(url_for('views.login')) }}</div>
+
+        <h2 class="auth-title">Entrar</h2>
+
+        {% if error %}
+          <div class="auth-error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('views.login') }}">
+          {% if next_url %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+          {% endif %}
+
+          <div class="field">
+            <label for="identifier">Usuário ou e-mail</label>
+            <input
+              id="identifier"
+              name="identifier"
+              type="text"
+              class="input"
+              value="{{ identifier or '' }}"
+              autocomplete="username"
+              required
+              autofocus
+            >
+          </div>
+
+          <div class="field">
+            <label for="password">Senha</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              class="input"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <div class="auth-submit-row">
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+          </div>
+        </form>
+
+        <div class="auth-footer-link">
+          Não tem conta? <a href="{{ url_for('views.register') }}">Criar conta</a>
+        </div>
       </div>
-
-      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-    </form>
-
-    <div class="auth-footer-link">
-      Não tem conta? <a href="{{ url_for('views.register') }}">Criar conta</a>
-    </div>
-  </main>
+    </main>
+  </div>
 
   <script type="module">
     import { initThemeToggle } from "{{ url_for('static', filename='js/theme.js') }}";

@@ -1,9 +1,11 @@
+{% from "_brand.html" import brand_mark %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Usuários — Kilo Admin</title>
+  <title>Usuários — Kilo</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
   <script>
     (function () {
       var t = localStorage.getItem("kilo-theme");
@@ -18,8 +20,8 @@
 <body class="admin-page">
   <header class="admin-header">
     <div class="admin-header-left">
-      <a href="{{ url_for('views.index') }}" class="wordmark">Kilo</a>
-      <span class="admin-tag">Administração</span>
+      {{ brand_mark(url_for('views.index')) }}
+      <span class="admin-tag">Admin</span>
     </div>
     <div class="admin-header-right">
       <a href="{{ url_for('views.index') }}" class="btn">Minhas notas</a>
@@ -32,7 +34,7 @@
 
   <section id="admin-users-view" class="admin-container">
     <div class="admin-toolbar-row">
-      <h1 class="admin-heading">Usuários cadastrados</h1>
+      <h1 class="admin-heading">Usuários</h1>
       <div class="admin-search-box">
         <input
           id="admin-search-input"
@@ -45,14 +47,14 @@
     </div>
 
     <div id="admin-users-grid" class="user-blocks-grid">
-      <div class="notes-empty">Carregando usuários…</div>
+      <div class="notes-empty">Carregando…</div>
     </div>
   </section>
 
   <section id="admin-user-view" class="admin-inspector hidden">
     <aside class="admin-inspector-sidebar">
       <div class="admin-inspector-user">
-        <button id="btn-back-users" type="button" class="btn">← Todos os usuários</button>
+        <button id="btn-back-users" type="button" class="btn">← Usuários</button>
         <div>
           <div id="admin-breadcrumb-user" class="user-block-name"></div>
           <div id="admin-breadcrumb-email" class="admin-inspector-meta"></div>
@@ -75,8 +77,7 @@
 
       <div class="editor-scroll">
         <div id="admin-note-empty" class="editor-empty">
-          <h2>Selecione uma nota</h2>
-          <p>Escolha uma nota na coluna à esquerda para inspecionar o conteúdo completo.</p>
+          <p>Selecione uma nota</p>
         </div>
 
         <article id="admin-note-view" class="editor-canvas hidden">
@@ -87,8 +88,7 @@
       </div>
 
       <footer class="workspace-footer">
-        <span>Visualização administrativa (descomprimido)</span>
-        <span id="admin-savings-stat" class="savings-stat">—</span>
+        <span id="admin-savings-stat" class="savings-stat"></span>
       </footer>
     </main>
   </section>

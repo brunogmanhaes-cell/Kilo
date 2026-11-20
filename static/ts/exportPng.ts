@@ -67,10 +67,10 @@ function loadSvgImage(svgMarkup: string): Promise<HTMLImageElement> {
 
 export async function exportNoteToPng(options: ExportPngOptions): Promise<void> {
   const isDark = getTheme() === "dark";
-  const bg = isDark ? "#0f1012" : "#fafafa";
-  const fg = isDark ? "#f4f4f5" : "#18181b";
-  const muted = isDark ? "#8e939e" : "#71717a";
-  const border = isDark ? "#25272d" : "#e4e4e7";
+  const bg = isDark ? "#000000" : "#ffffff";
+  const fg = isDark ? "#ffffff" : "#000000";
+  const muted = "#737373";
+  const border = isDark ? "#1f1f1f" : "#e5e5e5";
   const width = 820;
 
   const card = document.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLDivElement;
